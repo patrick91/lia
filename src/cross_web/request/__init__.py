@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Mapping, Optional, Any
+from typing import TYPE_CHECKING, Mapping, Optional, Any, Union
 
 from typing_extensions import Self
 
@@ -13,9 +13,94 @@ from ._base import (
     HTTPMethod,
     PathParams,
     QueryParams,
+    SyncHTTPRequestAdapter,
 )
 from ._starlette import StarletteRequestAdapter
-from ._testing import TestingRequestAdapter
+from ._testing import TestingHTTPRequestAdapter, TestingRequestAdapter
+
+
+class HTTPRequest:
+    def __init__(self, adapter: SyncHTTPRequestAdapter) -> None:
+        self._adapter = adapter
+
+    @classmethod
+    def from_django(cls, request: Any) -> Self:
+        from ._django import DjangoHTTPRequestAdapter
+
+        adapter = DjangoHTTPRequestAdapter(request)
+        return cls(adapter)
+
+    @classmethod
+    def from_flask(cls, request: Any) -> Self:
+        from ._flask import FlaskHTTPRequestAdapter
+
+        adapter = FlaskHTTPRequestAdapter(request)
+        return cls(adapter)
+
+    @classmethod
+    def from_chalice(cls, request: Any) -> Self:
+        from ._chalice import ChaliceHTTPRequestAdapter
+
+        adapter = ChaliceHTTPRequestAdapter(request)
+        return cls(adapter)
+
+    @classmethod
+    def from_form_data(cls, data: Mapping[str, str]) -> Self:
+        adapter = TestingHTTPRequestAdapter(
+            content_type="application/x-www-form-urlencoded",
+            post_data=data,
+        )
+        return cls(adapter)
+
+    @property
+    def method(self) -> HTTPMethod:
+        """The HTTP method of the request."""
+        return self._adapter.method
+
+    @property
+    def query_params(self) -> QueryParams:
+        """The query parameters of the request."""
+        return self._adapter.query_params
+
+    @property
+    def path_params(self) -> PathParams:
+        """The path parameters of the request."""
+        return self._adapter.path_params
+
+    @property
+    def headers(self) -> Mapping[str, str]:
+        """The request headers (case-insensitive keys recommended)."""
+        return self._adapter.headers
+
+    @property
+    def content_type(self) -> Optional[str]:
+        """The 'Content-Type' header value, if present."""
+        return self._adapter.content_type
+
+    @property
+    def body(self) -> Union[str, bytes]:
+        """Return the raw request body as bytes or string."""
+        return self._adapter.body
+
+    @property
+    def post_data(self) -> Mapping[str, Union[str, bytes]]:
+        """Return parsed POST data."""
+        return self._adapter.post_data
+
+    @property
+    def files(self) -> Mapping[str, Any]:
+        """Return uploaded files from the request."""
+        return self._adapter.files
+
+    @property
+    def url(self) -> str:
+        """The URL of the request."""
+        return self._adapter.url
+
+    @property
+    def cookies(self) -> Mapping[str, str]:
+        """The request cookies."""
+        return self._adapter.cookies
 
 
 class AsyncHTTPRequest:
