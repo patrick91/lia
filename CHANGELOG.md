@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7.0 - 2026-05-19
+------------------
+
+This release adds a synchronous `HTTPRequest` wrapper for sync request adapters.
+
 0.6.0 - 2026-04-13
 ------------------
 
