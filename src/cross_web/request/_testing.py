@@ -1,9 +1,88 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Union
 
-from ._base import AsyncHTTPRequestAdapter, FormData, HTTPMethod, QueryParams
+from ._base import (
+    AsyncHTTPRequestAdapter,
+    FormData,
+    HTTPMethod,
+    PathParams,
+    QueryParams,
+    SyncHTTPRequestAdapter,
+)
+
+
+class TestingHTTPRequestAdapter(SyncHTTPRequestAdapter):
+    __test__ = False
+
+    def __init__(
+        self,
+        *,
+        method: HTTPMethod = "POST",
+        query_params: QueryParams | None = None,
+        path_params: PathParams | None = None,
+        headers: Mapping[str, str] | None = None,
+        content_type: str | None = None,
+        body: Union[str, bytes] = "",
+        post_data: Mapping[str, Union[str, bytes]] | None = None,
+        files: Mapping[str, Any] | None = None,
+        url: str = "http://testserver/",
+        cookies: Mapping[str, str] | None = None,
+    ) -> None:
+        self._method = method
+        self._query_params = query_params or {}
+        self._path_params = path_params or {}
+        self._headers = headers or {}
+        self._content_type = content_type
+        self._body = body
+        self._post_data = post_data or {}
+        self._files = files or {}
+        self._url = url
+        self._cookies = cookies or {}
+
+    @property
+    def method(self) -> HTTPMethod:
+        return self._method
+
+    @property
+    def query_params(self) -> QueryParams:
+        return self._query_params
+
+    @property
+    def path_params(self) -> PathParams:
+        return self._path_params
+
+    @property
+    def headers(self) -> Mapping[str, str]:
+        return self._headers
+
+    @property
+    def content_type(self) -> Optional[str]:
+        return self._content_type
+
+    @property
+    def body(self) -> Union[str, bytes]:
+        return self._body
+
+    @property
+    def post_data(self) -> Mapping[str, Union[str, bytes]]:
+        return self._post_data
+
+    @property
+    def files(self) -> Mapping[str, Any]:
+        return self._files
+
+    def get_form_data(self) -> FormData:
+        return FormData(files=self._files, form=self._post_data)
+
+    @property
+    def url(self) -> str:
+        return self._url
+
+    @property
+    def cookies(self) -> Mapping[str, str]:
+        return self._cookies
 
 
 class TestingRequestAdapter(AsyncHTTPRequestAdapter):
