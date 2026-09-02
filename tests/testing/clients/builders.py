@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import Mapping
-from typing import Any
+from typing import Annotated, Any
 from urllib.parse import urlsplit
 
 
@@ -227,13 +227,16 @@ def create_async_flask_app() -> Any:
 
 def create_litestar_app() -> Any:
     from litestar import Litestar, Request, post
-    from litestar.params import FromPath
+
+    try:
+        from litestar.params import PathParameter
+    except ImportError:
+        from litestar.params import Parameter as PathParameter
 
     from cross_web.request._litestar import LitestarRequestAdapter
 
-    @post("/request/{item_id:str}", status_code=200)
     async def handler(
-        request: Request[Any, Any, Any], item_id: FromPath[str]
+        request: Request[Any, Any, Any], item_id: str
     ) -> dict[str, object]:
         adapter = LitestarRequestAdapter(request)
 
@@ -248,7 +251,10 @@ def create_litestar_app() -> Any:
             has_file="file" in form_data.files,
         )
 
-    return Litestar([handler])
+    handler.__annotations__["item_id"] = Annotated[str, PathParameter()]
+    route_handler = post("/request/{item_id:str}", status_code=200)(handler)
+
+    return Litestar([route_handler])
 
 
 def create_quart_app() -> Any:
