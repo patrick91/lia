@@ -227,12 +227,13 @@ def create_async_flask_app() -> Any:
 
 def create_litestar_app() -> Any:
     from litestar import Litestar, Request, post
+    from litestar.params import FromPath
 
     from cross_web.request._litestar import LitestarRequestAdapter
 
     @post("/request/{item_id:str}", status_code=200)
     async def handler(
-        request: Request[Any, Any, Any], item_id: str
+        request: Request[Any, Any, Any], item_id: FromPath[str]
     ) -> dict[str, object]:
         adapter = LitestarRequestAdapter(request)
 
